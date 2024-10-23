@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dublin Bike Stations</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #stationList {
+            list-style-type: none;
+            padding: 0;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        #stationList li {
+            padding: 10px;
+            border-bottom: 1px solid #f1f1f1;
+            cursor: pointer;
+        }
+        #stationList li:hover {
+            background-color: #f8f9fa;
+        }
+        .card {
+            margin-top: 20px;
+        }
+        .highlight {
+            background-color: #e9ecef;
+        }
+    </style>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+
+<div class="container mt-4">
+    <h1 class="text-center">Dublin Bike Stations</h1>
+
+    <!-- Search input -->
+    <div class="input-group mb-3">
+        <input type="text" id="search" class="form-control" placeholder="Search Bike Station" aria-label="Search Bike Station">
+        <button class="btn btn-outline-secondary" type="button" id="clearSearch">Clear</button>
+    </div>
+
+    <!-- Row for station list and details -->
+    <div class="row">
+        <!-- List of bike stations -->
+        <div class="col-md-4">
+            <ul id="stationList" class="list-group"></ul>
+        </div>
+
+        <!-- Bike station details -->
+        <div class="col-md-8">
+            <div id="stationDetails" class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Station Details</h5>
+                    <p class="card-text">Select a station to view details.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Load the JSON data
+    const bikeData = [];
+    $.getJSON('dublinbike.json', function(data) {
+        bikeData.push(...data);
+        displayStations(bikeData);
+    });
+
+    // Function to display the list of stations
+    function displayStations(data) {
+        const $stationList = $('#stationList');
+        $stationList.empty();
+        data.forEach(station => {
+            $stationList.append(`
+                <li class="list-group-item" data-id="${station.number}">
+                    <strong>${station.name}</strong><br>
+                    <small>${station.address}</small>
+                </li>
+            `);
+        });
+    }
+
+    // Filter stations as user types in search input
+    $('#search').on('input', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        const filteredStations = bikeData.filter(station =>
+            station.name.toLowerCase().includes(searchTerm)
+        );
+        displayStations(filteredStations);
+    });
+
+    // Clear search
+    $('#clearSearch').on('click', function() {
+        $('#search').val('');
+        displayStations(bikeData);
+    });
+
+    // Display station details when clicked
+    $('#stationList').on('click', 'li', function() {
+        $('#stationList li').removeClass('highlight'); // Remove highlight from all items
+        $(this).addClass('highlight'); // Highlight clicked item
+
+        const stationId = $(this).data('id');
+        const station = bikeData.find(s => s.number === stationId);
+        if (station) {
+            $('#stationDetails').html(`
+                <div class="card-body">
+                    <h5 class="card-title">${station.name}</h5>
+                    <p class="card-text">
+                        <strong>Address:</strong> ${station.address}<br>
+                        <strong>Status:</strong> ${station.status}<br>
+                        <strong>Total Bike Stands:</strong> ${station.bike_stands}<br>
+                        <strong>Available Bike Stands:</strong> ${station.available_bike_stands}<br>
+                        <strong>Available Bikes:</strong> ${station.available_bikes}<br>
+                        <strong>Last Update:</strong> ${new Date(station.last_update).toLocaleString()}<br>
+                        <strong>Location:</strong> Lat ${station.position.lat}, Lng ${station.position.lng}
+                    </p>
+                </div>
+            `);
+        }
+    });
+</script>
+
+</body>
+</html>
